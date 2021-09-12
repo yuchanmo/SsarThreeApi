@@ -9,6 +9,11 @@ from bs4 import BeautifulSoup
 import requests
 from urllib.parse import urljoin
 import numpy as np
+import json
+import werkzeug
+import os
+import cv2
+import os
 
 id = 'root'
 pwd = '1'
@@ -55,7 +60,38 @@ class Arts(Resource):
         artist_name = args['artistname']
         filtered_df = df[df['artist_name_kor']==artist_name]
         filtered_df['image_url'] = filtered_df[['auction_url_num','image_name','lot_no']].apply(lambda x : f"http://20.85.245.228:9876/images/seoul/{x['auction_url_num']}/LOT{x['lot_no']}_{x['image_name']}",axis=1)
-        return convertJson(filtered_df)
+        return convertJson(filtered_df[:7])
+
+def saveImage(img,userno):
+    destpath = os.path.join(base_path,'images',str(userno))
+    os.makedirs(destpath,exist_ok=True)    
+    file_name = img.filename
+    file_type = img.mimetype
+    file_ext = img.filename.split('.')[-1]
+    file_full_path = os.path.join(destpath,file_name)
+    filestr = img.read()
+    npimg = np.fromstring(filestr, np.uint8)
+    img = cv2.imdecode(npimg, cv2.COLOR_BGR2RGB)
+    cv2.imwrite(file_full_path,img)
+    
+
+
+class MyCollection(Resource):
+    def post(self):
+        try:
+            parser = RequestParser() 
+            parser.add_argument('info')      
+            parser.add_argument('images', type=werkzeug.datastructures.FileStorage, location='files',action='append')
+            #parser.add_argument('images')
+            args = parser.parse_args()
+            info = json.loads(args['info'])
+            images = args['images']
+            userno = info['userid']
+            for i in images:
+                saveImage(i,userno)
+            return 'OK'
+        except Exception as e:
+            return 'FAIL'
 
         
 class Collection(Resource):
@@ -64,7 +100,7 @@ class Collection(Resource):
         # parser.add_argument('page', required=True,help="Name cannot be blank!")
         # args = parser.parse_args()
         # page = args['page']
-        filtered_df = df.sample(n=10)
+        filtered_df = df.sample(n=20)
         filtered_df['image_url'] = filtered_df[['auction_url_num','image_name','lot_no']].apply(lambda x : f"http://20.85.245.228:9876/images/seoul/{x['auction_url_num']}/LOT{x['lot_no']}_{x['image_name']}",axis=1)
         return convertJson(filtered_df)
 
@@ -170,6 +206,7 @@ api.add_resource(Releases,'/releases')
 api.add_resource(SearchRank,'/searchrank')
 api.add_resource(FavoriteRank,'/favoriterank')
 api.add_resource(ArtistInfo,'/artistinfo')
+api.add_resource(MyCollection,'/mycollection')
 #api.add_resource(ArtistRanking,'/artistranking')
 
 if __name__ == '__main__':

@@ -18,14 +18,15 @@ from utils import *
 from constant import *
 from resources.home import Home
 from resources.arts import Arts
-from resources.followingartist import FollowingArtist
+from resources.followingartist import FollowingArtists
 from resources.artists import Artists
 from resources.release import Releases
-from resources.sellingarts import SellingArt
+from resources.sellingarts import SellingArts
 from resources.artistsinfo import ArtistInfo
 from resources.artistrank import ArtistRanking
 from resources.searchrank import SearchRanking
 from resources.mycollection import MyCollection
+from resources.login import Login
 
 #static server test
 static_url_base_path = '/static'
@@ -80,12 +81,13 @@ api = Api(app)
 
 
 api.add_resource(Home, '/')
+api.add_resource(Login,'/login')
 api.add_resource(Arts, '/arts')
 api.add_resource(Artists, '/artists')
-api.add_resource(FollowingArtist, '/following')
-api.add_resource(SellingArt, '/selling')
+api.add_resource(FollowingArtists, '/followingartists')
+api.add_resource(SellingArts, '/selling')
 api.add_resource(Releases,'/releases')
-api.add_resource(SearchRanking,'/searchrank')
+api.add_resource(SearchRanking,'/searchranking')
 #api.add_resource(FavoriteRank,'/favoriterank')
 api.add_resource(ArtistInfo,'/artistinfo')
 api.add_resource(MyCollection,'/mycollection')

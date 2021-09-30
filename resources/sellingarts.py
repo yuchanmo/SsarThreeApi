@@ -11,7 +11,7 @@ import werkzeug
 
 
 
-class SellingArt(Resource):
+class SellingArts(Resource):
     def get(self):
         parser = RequestParser()
         # parser.add_argument('my', required=True,help="Name cannot be blank!")

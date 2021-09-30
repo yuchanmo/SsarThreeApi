@@ -9,7 +9,7 @@ from utils import *
 import werkzeug
 
 
-class FollowingArtist(Resource):
+class FollowingArtists(Resource):
     def get(self):
         parser = RequestParser()
         # parser.add_argument('follower', required=True,help="Name cannot be blank!")

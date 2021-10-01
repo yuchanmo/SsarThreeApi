@@ -17,7 +17,7 @@ import os
 from utils import *
 from constant import *
 from resources.home import Home
-from resources.arts import Arts
+from resources.artistarts import ArtistArts
 from resources.followingartist import FollowingArtists
 from resources.artists import Artists
 from resources.release import Releases
@@ -82,7 +82,7 @@ api = Api(app)
 
 api.add_resource(Home, '/')
 api.add_resource(Login,'/login')
-api.add_resource(Arts, '/arts')
+api.add_resource(ArtistArts, '/artistarts')
 api.add_resource(Artists, '/artists')
 api.add_resource(FollowingArtists, '/followingartists')
 api.add_resource(SellingArts, '/selling')

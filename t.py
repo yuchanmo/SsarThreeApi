@@ -4,5 +4,10 @@
 
 import pandas as pd
 from constant import *
-artist_name ='김환'
-df = pd.read_sql(f"exec searchArtistList '{artist_name}'",sqlserver)
+
+
+que = session.query(following_artists).filter_by(user_id=1)
+que.count()
+for row in que:
+    print(row.user_id)
+    print(row.artist_id)

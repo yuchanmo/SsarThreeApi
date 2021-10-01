@@ -1,0 +1,1 @@
+d:/Programming/artpassion/aucapi/env/Scripts/python.exe waitress_server.py 

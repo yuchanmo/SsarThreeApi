@@ -14,6 +14,7 @@ import werkzeug
 import os
 import cv2
 import os
+from resources.auctionart import AuctionArt
 from utils import *
 from constant import *
 from resources.home import Home
@@ -91,8 +92,8 @@ api.add_resource(SearchRanking,'/searchranking')
 #api.add_resource(FavoriteRank,'/favoriterank')
 api.add_resource(ArtistInfo,'/artistinfo')
 api.add_resource(MyCollection,'/mycollection')
-
-#api.add_resource(ArtistRanking,'/artistranking')
+api.add_resource(AuctionArt,'/auctionart')
+api.add_resource(ArtistRanking,'/artistranking')
 
 if __name__ == '__main__':
     app.run(debug=True)

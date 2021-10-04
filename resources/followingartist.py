@@ -20,7 +20,7 @@ class FollowingArtists(Resource):
             sample = args['sample']
             df = pd.read_sql(f"exec searchFollowingArtistList {user_id}",sqlserver)
             df['image_url'] = df[['auction_url_num','image_name','lot_no','auction_site','auction_cate']].apply(lambda x :  f"{image_base_url}/{x['auction_site']}/{x['auction_cate']}/{x['auction_url_num']}/LOT{x['lot_no']}_{x['image_name']}",axis=1)
-            final_df = df.sample(6) if sample else df
+            final_df = df.sample(frac=1)[:6] if sample=='True' else df
             return final_df.to_dict(orient='records')
         except Exception as e:
             return {}
@@ -34,16 +34,18 @@ class FollowingArtists(Resource):
             parser.add_argument('turnon', required=True,help="Name cannot be blank!")
             args = parser.parse_args()
             user_id,artist_id,turn_on = args['userid'],args['artistid'],args['turnon']
+            turn_on = True if turn_on =='True' else False
             row = session.query(following_artists).filter_by(user_id=user_id,artist_id =artist_id).first()
 
-            if row == None and turn_on ==True:
-                newrow = following_artists(user_id = user_id,artist_id =artist_id,turn_on = turn_on)
+            if row == None:
+                newturnon = False if turn_on else True
+                newrow = following_artists(user_id = user_id,artist_id =artist_id,turn_on = int(newturnon))
                 session.add(newrow)
                 session.commit()
 
             elif row!=None:
-                row.turn_on = turn_on
+                row.turn_on = int(turn_on)
                 session.commit()
-            return jsonify(success=True)
+            return {'turn_on':row.turn_on}
         except Exception as e:
-            return jsonify(success=False)
+            return {'turn_on':None}

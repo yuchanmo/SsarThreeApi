@@ -20,3 +20,14 @@ def saveImage(destpath,img,userno):
     npimg = np.fromstring(filestr, np.uint8)
     img = cv2.imdecode(npimg, cv2.COLOR_BGR2RGB)
     cv2.imwrite(file_full_path,img)
+
+
+class CustomJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, int):
+            return int(obj)
+        if isinstance(obj, float):
+            return float(obj)
+        if isinstance(obj, list):
+            return obj.tolist()
+        return super(CustomJsonEncoder, self).default(obj)

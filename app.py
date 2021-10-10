@@ -15,6 +15,7 @@ import os
 import cv2
 import os
 from resources.auctionart import AuctionArt
+from resources.followingartistauctionplan import FollowingArtistsAuctionPlan
 from utils import *
 from constant import *
 from resources.home import Home
@@ -24,7 +25,7 @@ from resources.artists import Artists
 from resources.release import Releases
 from resources.sellingarts import SellingArts
 from resources.artistsinfo import ArtistInfo
-from resources.artistrank import ArtistRanking
+from resources.artistrank import ArtistRanking, RecentArtistRanking, RecentPopularArtistRanking
 from resources.searchrank import SearchRanking
 from resources.mycollection import MyCollection
 from resources.login import Login
@@ -94,6 +95,9 @@ api.add_resource(ArtistInfo,'/artistinfo')
 api.add_resource(MyCollection,'/mycollection')
 api.add_resource(AuctionArt,'/auctionart')
 api.add_resource(ArtistRanking,'/artistranking')
+api.add_resource(FollowingArtistsAuctionPlan,'/followingartistsauctionplan')
+api.add_resource(RecentArtistRanking,'/recentartistranking')
+api.add_resource(RecentPopularArtistRanking,'/recentpopularartistranking')
 
 if __name__ == '__main__':
     app.run(debug=True)

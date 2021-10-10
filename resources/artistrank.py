@@ -87,6 +87,30 @@ def index(df):
 
 
 
+class RecentArtistRanking(Resource):
+    def get(self):
+        parser = RequestParser()
+        parser.add_argument('artistid', required=True,help="Name cannot be blank!")
+        args = parser.parse_args()
+        artist_id = int(args['artistid'])
+        df = pd.read_sql('exec getArtistRanking',sqlserver)
+        df['artist_name_kor_born'] = df['artist_name_kor'] + '('+ df['birth'] + ')'
+        avg,canvas,max,sum,count,recent,total = index(df)
+        return total[total['artist_id']==artist_id].to_dict(orient='records')
+
+
+class RecentPopularArtistRanking(Resource):
+    def get(self):
+        parser = RequestParser()     
+        
+        df = pd.read_sql('exec getArtistRanking',sqlserver)
+        df['artist_name_kor_born'] = df['artist_name_kor'] + '('+ df['birth'] + ')'
+        avg,canvas,max,sum,count,recent,total = index(df)
+        return count.sort_values(by=['rank'])[:10].to_dict(orient='records')
+
+
+
+
 class ArtistRanking(Resource):
     def get(self):
         #여기에 query string으로 넣을 키워드를 넘기면

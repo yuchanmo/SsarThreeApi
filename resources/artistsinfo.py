@@ -16,16 +16,15 @@ from urllib.parse import urljoin
         
 class ArtistInfo(Resource):
     def get(self):
-        rdnum = np.random.randint(1,1000,1)[0]
-        base_url = 'http://www.mu-um.com'
-        res = requests.get(f'http://www.mu-um.com/?mid=01&act=dtl&idx={rdnum}')
-        html = res.text
-        bs = BeautifulSoup(html,'html.parser')
-        img_src = bs.select('#contents > article.artists_view > div.view_wrap.clearfix > div.scale_wrap > p > img')[0]['src']
-        img_full_src = urljoin(base_url,img_src)
-        description = bs.select('div.txt_wrap >p')
-        txt_res = []
-        for d in description:
-            txt_res.append(d.text)
-        desc = '\n'.join(txt_res)
-        return {'img_src':img_full_src,'description':desc}
+        try:
+            parser = RequestParser()
+            parser.add_argument('artistid', required=True,help="Name cannot be blank!")            
+            parser.add_argument('userid', required=True,help="Name cannot be blank!")            
+            args = parser.parse_args()
+            artist_id,user_id = args['artistid'],args['userid']
+            df = pd.read_sql(f"exec getArtistInfo {artist_id}, {user_id}",sqlserver)
+            df['image_url'] = df[['auction_url_num','image_name','lot_no','auction_site','auction_cate']].apply(lambda x :  f"{image_base_url}/{x['auction_site']}/{x['auction_cate']}/{x['auction_url_num']}/LOT{x['lot_no']}_{x['image_name']}",axis=1)            
+            df = df.fillna('')
+            return df.to_dict(orient='records')
+        except Exception as e:
+            return {}

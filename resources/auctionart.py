@@ -36,10 +36,13 @@ class AuctionArt(Resource):
             args = parser.parse_args()
             art_info_id = args['artinfoid']
             auction_art_df = pd.read_sql(f"exec getAuctionArtDetail {art_info_id}",sqlserver)
+            auction_art_df['image_url'] = auction_art_df[['auction_url_num','image_name','lot_no','auction_site','auction_cate']].apply(lambda x :  f"{image_base_url}/{x['auction_site']}/{x['auction_cate']}/{x['auction_url_num']}/LOT{x['lot_no']}_{x['image_name']}",axis=1)
+            auction_art_df = auction_art_df.fillna('')
             auction_art_row = auction_art_df.iloc[0]
             auction_art_history_df = pd.read_sql(f"exec getAuctionPriceHistory {art_info_id}",sqlserver)
+            auction_art_history_df = auction_art_history_df.fillna('')
             res = {'auction_art_info' : auction_art_row.to_dict(),'auction_art_history':auction_art_history_df.to_dict(orient='records')}
-            return auction_art_row.to_dict() #auction_art_history_df.to_dict(orient='records')
+            return res #auction_art_history_df.to_dict(orient='records')
         except Exception as e:
             pass
 

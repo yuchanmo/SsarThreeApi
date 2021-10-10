@@ -11,7 +11,7 @@ from constant import *
 import werkzeug
 
 
-class ArtistArts(Resource):
+class ArtistDetailRanking(Resource):
     def get(self):
         try:
             parser = RequestParser()
@@ -20,7 +20,7 @@ class ArtistArts(Resource):
             artist_id = args['artistid']
             df = pd.read_sql(f"exec getArtListForArtist {artist_id}",sqlserver)
             df['image_url'] = df[['auction_url_num','image_name','lot_no','auction_site','auction_cate']].apply(lambda x :  f"{image_base_url}/{x['auction_site']}/{x['auction_cate']}/{x['auction_url_num']}/LOT{x['lot_no']}_{x['image_name']}",axis=1)
-            return df.sample(frac=1)[:20].to_dict(orient='records')
+            return df.sample(6).to_dict(orient='records')
         except Exception as e:
             return {}
         #RequestParser라고 하는곳에

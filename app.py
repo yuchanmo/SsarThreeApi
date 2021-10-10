@@ -14,6 +14,7 @@ import werkzeug
 import os
 import cv2
 import os
+from resources.artistdetailrank import ArtistDetailMoney, ArtistDetailRanking
 from resources.auctionart import AuctionArt
 from resources.followingartistauctionplan import FollowingArtistsAuctionPlan
 from utils import *
@@ -95,6 +96,8 @@ api.add_resource(ArtistInfo,'/artistinfo')
 api.add_resource(MyCollection,'/mycollection')
 api.add_resource(AuctionArt,'/auctionart')
 api.add_resource(ArtistRanking,'/artistranking')
+api.add_resource(ArtistDetailRanking,'/artistdetailranking')
+api.add_resource(ArtistDetailMoney,'/artistdetailmoney')
 api.add_resource(FollowingArtistsAuctionPlan,'/followingartistsauctionplan')
 api.add_resource(RecentArtistRanking,'/recentartistranking')
 api.add_resource(RecentPopularArtistRanking,'/recentpopularartistranking')

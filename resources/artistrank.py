@@ -106,7 +106,7 @@ class RecentPopularArtistRanking(Resource):
         df = pd.read_sql('exec getArtistRanking',sqlserver)
         df['artist_name_kor_born'] = df['artist_name_kor'] + '('+ df['birth'] + ')'
         avg,canvas,max,sum,count,recent,total = index(df)
-        return count.sort_values(by=['rank'])[:10].to_dict(orient='records')
+        return count.sort_values(by=['rank'])[:5].to_dict(orient='records')
 
 
 

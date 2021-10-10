@@ -283,3 +283,18 @@ total_index.to_sql('total_index',sqlserver,'dbo',if_exists='append',index=False)
 detail_chart.to_sql('detail_chart',sqlserver,'dbo',if_exists='append',index=False)
 potion_count.to_sql('potion_count',sqlserver,'dbo',if_exists='append',index=False)
 potion_price.to_sql('potion_price',sqlserver,'dbo',if_exists='append',index=False)
+
+df['auction_year'].to_list()
+artist_id = 6987
+df = pd.read_sql('exec [getArtistDetailRanking] 6987',sqlserver)
+df = pd.read_sql(f'exec [getArtistDetailMoneyChart] {artist_id}',sqlserver)
+df[['money','estimate_high','estimate_low']] = df[['money','estimate_high','estimate_low']].fillna(0).apply(lambda x : round(x,0))
+
+res = dict()
+groups = df.groupby('cate')
+for gn,g in groups:    
+    x = g['auction_year'].to_list()
+    y1 = g['money'].to_list()
+    y2 = g['estimate_high'].to_list()
+    y3 = g['estimate_low'].to_list()
+    res[gn] = {'x':x,'y':[{'data':y1},{'data':y2},{'data':y3}]}

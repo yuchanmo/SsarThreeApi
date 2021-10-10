@@ -40,8 +40,8 @@ class AuctionArt(Resource):
             auction_art_df = auction_art_df.fillna('')
             auction_art_row = auction_art_df.iloc[0]
             auction_art_history_df = pd.read_sql(f"exec getAuctionPriceHistory {art_info_id}",sqlserver)
-            auction_art_history_df = auction_art_history_df.fillna('')
-            res = {'auction_art_info' : auction_art_row.to_dict(),'auction_art_history':auction_art_history_df.to_dict(orient='records')}
+            auction_art_history_df['money'] = auction_art_history_df['money'].fillna('0')
+            res = {'auction_art_info' : auction_art_row.to_dict(),'auction_art_history':{'x':auction_art_history_df['auction_date'].to_list(),'y':[{'data':auction_art_history_df['money'].to_list(),'stroke':1}]}}
             return res #auction_art_history_df.to_dict(orient='records')
         except Exception as e:
             pass

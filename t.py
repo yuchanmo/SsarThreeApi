@@ -298,3 +298,23 @@ for gn,g in groups:
     y2 = g['estimate_high'].to_list()
     y3 = g['estimate_low'].to_list()
     res[gn] = {'x':x,'y':[{'data':y1},{'data':y2},{'data':y3}]}
+
+from constant import *
+import os
+from glob import glob
+imgpath = os.path.join(mycollection_img_base_path,'1','1')
+os.listdir(imgpath)
+
+glob(f'{imgpath}\\*')
+mycollection_img_base_path
+mycollection_image_url_base = f'{image_base_url}/mycollection'
+user_id=1
+df = pd.read_sql(f'exec getMyCollectionList {user_id}',sqlserver)
+df[['img_path','img_url_path']] = df[['user_id','user_art_id']].apply(lambda x : (os.path.join(mycollection_img_base_path,str(x['user_id']),str(x['user_art_id'])),f"{mycollection_image_url_base}/{str(x['user_id'])}/{str(x['user_art_id'])}"),axis=1 ).apply(pd.Series)
+
+df['img_list'] = df[['img_path','img_url_path']].apply(lambda x : [f"{x['img_url_path']}/{i}" for i in os.listdir(x['img_path'])],axis=1)
+cols = ['artist_name_kor', 'artist_name_eng', 'birth', 'death', 'user_art_id',
+       'user_id', 'artist_id', 'title_kor', 'title_eng', 'unit_cd',
+       'size_length', 'size_height', 'canvas', 'edition', 'image_name',
+       'create_time', 'price', 'buy_date', 'img_list']
+df[cols].to_dict(orient='records')

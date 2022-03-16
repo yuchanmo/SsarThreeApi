@@ -4,17 +4,17 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 
 coninfo = {
-    'user': 'sa',
-    'pwd': '1',
-    'host': 'DESKTOP-VP3C86M',
-    'database': 'ArtMania'
+    'user': 'artlink',
+    'pwd': '!1dkxmfldzm',
+    'host': 'artlink.database.windows.net',
+    'database': 'artlink'
 }
 sqlserver = create_engine(
     f"mssql+pymssql://{coninfo['user']}:{coninfo['pwd']}@{coninfo['host']}/{coninfo['database']}", echo=False)
 
 Base = automap_base()
 Base.prepare(sqlserver, reflect=True)
-following_artists = Base.classes.following_artists
+#following_artists = Base.classes.following_artists
 
 session = Session(sqlserver)
 

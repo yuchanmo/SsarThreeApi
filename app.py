@@ -12,8 +12,7 @@ import numpy as np
 import json
 import werkzeug
 import os
-import cv2
-import os
+#import cv2
 from resources.artistdetailrank import ArtistDetailMoney, ArtistDetailRanking
 from resources.auctionart import AuctionArt
 from resources.followingartistauctionplan import FollowingArtistsAuctionPlan
@@ -103,5 +102,5 @@ api.add_resource(RecentArtistRanking,'/recentartistranking')
 api.add_resource(RecentPopularArtistRanking,'/recentpopularartistranking')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True)
 

@@ -134,3 +134,53 @@ class ArtistRanking(Resource):
         return res
         # res = df.sample(n=month)
         # return res.to_dict(orient='records')
+
+'''
+인기검색작가 / 인기판매 작가 / 전체작가 랭킹 / follow artist 랭킹
+/artists/rank
+	request param 
+		period(검색구간) : 6m 또는 1y 또는 3y, 미입력시 6m
+		rank: 
+			search(검색어) 또는 
+			sell_count(판매량) 또는 
+			sell_revenue(판매금액) 또는
+			total_index 또는
+			rise_rate (상승률) 또는
+			bid_value_avg(평균낙찰가) 또는
+			bid_value_ho(호당낙찰가) 또는
+			total_revenue (총판매가) 또는
+			release_count (출품수) 
+			미 입력시 에러
+		columns: name, rank, search_count, sell_count, sell_revenue 등 가져올 수 있는 컬럼 가변적으로, 미입력시 에러
+		page_size (한번에 가져올 row수) : 1~100 정수, 미입력시 20이 기본값
+		page_num (몇페이지?) : 1~n 정수, 미입력시 1이 기본값
+		is_follow (following한 여부) : y 또는 n, 미입력시 n이 기본값
+		filter_auction_house
+		filter_city
+		filter_auction_year_start
+		filter_auction_year_end
+		filter_artwork_type
+		filter_artwork_year_start
+		filter_artwork_year_end
+		filter_sale_price_start
+		filter_sale_price_end
+		filter_size_metric
+		filter_height_strat
+		filter_height_end
+		filter_height_width
+	response
+		[{
+			'rank':1,
+			'name':'피카소',
+			'search_count':1,
+			'sell_count':1,
+			'sell_revenue':'$1000',
+			'total_index':1
+			...
+		}]
+
+class ArtistRankv2():
+    def get(self):
+        page = request.args.get('page', default = 1, type = int)
+        return res
+'''

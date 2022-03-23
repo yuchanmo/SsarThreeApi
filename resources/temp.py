@@ -46,8 +46,12 @@ def index(df):
     count_money = count_money.sort_values(by=['count_rank'], ascending=True)
     count_money.columns = ['count','count_rank']
     #최근 6개월 상승율
-    df_6month = df[(df['auction_date'] < datetime.today().strftime('%Y-%m-%d')) & (df['auction_date'] >= (datetime.today() - relativedelta(months=+6)).strftime('%Y-%m-%d'))]
-    df_12month = df[(df['auction_date'] < (datetime.today() - relativedelta(months=+6)).strftime('%Y-%m-%d')) & (df['auction_date'] >= (datetime.today() - relativedelta(months=+12)).strftime('%Y-%m-%d'))]
+    df_6month = df[(df['auction_date'] < datetime.today().strftime('%Y-%m-%d')) &
+     (df['auction_date'] >= (datetime.today() - relativedelta(months=+6)).strftime('%Y-%m-%d'))]
+    
+
+    df_12month = df[(df['auction_date'] < (datetime.today() - relativedelta(months=+6)).strftime('%Y-%m-%d')) &
+     (df['auction_date'] >= (datetime.today() - relativedelta(months=+12)).strftime('%Y-%m-%d'))]
 
     df_6month_avg_money = df_6month.groupby(['artist_name_kor_born','artist_id'])[['money']].mean()
     df_12month_avg_money = df_12month.groupby(['artist_name_kor_born','artist_id'])[['money']].mean()
@@ -156,11 +160,11 @@ class ArtistRanking(Resource):
 		page_size (한번에 가져올 row수) : 1~100 정수, 미입력시 20이 기본값
 		page_num (몇페이지?) : 1~n 정수, 미입력시 1이 기본값
 		is_follow (following한 여부) : y 또는 n, 미입력시 n이 기본값
-		filter_auction_house
-		filter_city
+		filter_auction_site
+		filter_auction_city
 		filter_auction_year_start
 		filter_auction_year_end
-		filter_artwork_type
+		filter_medium
 		filter_artwork_year_start
 		filter_artwork_year_end
 		filter_sale_price_start
@@ -190,15 +194,6 @@ class ArtistRanking(Resource):
 
 class ArtistRankv2():
     
-    def get(self):
-        page = request.args.get('page', default = 1, type = int)
-        condition = self.get_condition_from_parameter(request)
-        data = self.get_artist_rank(condition)
-
-        res = {
-            data:data
-        }
-        return res
 
     def get_condition_from_parameter(request):
         return {
@@ -214,12 +209,12 @@ class ArtistRankv2():
                     #total_revenue (총판매가) 또는
                     #release_count (출품수) 
                     #미 입력시 에러
-            #'columns': 'name, rank, search_count', #name, rank, search_count, sell_count, sell_revenue 등 가져올 수 있는 컬럼 가변적으로, 미입력시 에러
+            'columns': 'name, rank, search_count', #name, rank, search_count, sell_count, sell_revenue 등 가져올 수 있는 컬럼 가변적으로, 미입력시 에러
             'page_size' : 20, #(한번에 가져올 row수) : 1~100 정수, 미입력시 20이 기본값
             'page_num' :1, #(몇페이지?) : 1~n 정수, 미입력시 1이 기본값
             'is_follow' :'n',#(following한 여부) : y 또는 n, 미입력시 n이 기본값
-            'filter_auction_site':NUL,
-            'filter_auction_place':NUL,
+            'filter_auction_house':NUL,
+            'filter_city':NUL,
             'filter_auction_year_start':NUL,
             'filter_auction_year_end':NUL,
             'filter_artwork_type':NUL,
@@ -233,97 +228,39 @@ class ArtistRankv2():
             'filter_width_start':NUL,
             'filter_width_end':NUL,
         }
-    
-    def make_auction_filter_sql(condition):
-        result = ' WHERE 1 = 1 '
-        if condition['filter_auction_place'] is not None:
-            result += ' and auction_place = %(filter_auction_place)s '
-        if condition['filter_auction_year_start'] is not None:
-            result += ' and auction_date >= %(filter_auction_year_start)s'
-        if condition['filter_auction_year_end'] is not None:
-            result += ' and auction_date <= %(filter_auction_year_end)s'
-        return result
-
-    def make_auctionsite_filter_sql(condition):
-        result = ' WHERE 1 = 1 '
-        if condition['filter_auction_site'] is not None:
-            result += ' and auction_site = %(filter_auction_site)s '
-        return result
-
-    def make_auctionart_filter_sql(condition):
-        result = ' WHERE 1 = 1 '
-        if condition['filter_sale_price_start'] is not None:
-            result += ' and money >= %(filter_sale_price_start)s '
-        if condition['filter_sale_price_end'] is not None:
-            result += ' and money <= %(filter_sale_price_end)s '
-        return result
-
-    def make_art_filter_sql(condition):
-        result = ' WHERE 1 = 1 '
-        if condition['filter_artwork_type'] is not None:
-            result += ' and artwork_type like %(filter_artwork_type)s '
-        if condition['filter_artwork_year_start'] is not None:
-            result += ' and make_year >= %(filter_artwork_year_start)s '
-        if condition['filter_artwork_year_end'] is not None:
-            result += ' and make_year <= %(filter_artwork_year_end)s '
-        '''
-        @TODO
-            filter_size_metric
-            filter_height_start
-            filter_height_end
-            filter_width_start
-            filter_width_end
-        '''
-        return result
-
+    # (검색구간 6month, 1year 등이 art 출시일인지? 아니면 auction 날짜인지 확인필요.
     # https://github.com/seungchan100/star/blob/main/screenshot/%EB%B6%84%EC%84%9D.png
-    #
-    def get_artist_rank(self, condition):
-
-        ''' 
-        @TODO
-        검색수 -- 미지원
-        평균낙찰가 avg(money)
-        호당낙찰가 avg(canvas_size_money)
-        최고낙찰가 max(money)
-        총판매가 sum(money)
-        출품수 count(1)
-        상승률 --
-        total index = rank( SUM(상승률랭크, 평균가랭크, 호당랭크, 최고가랭크,총판매가랭크,출품수랭크)  )
+    def get_artist_rank(condition):
+        #art_filter_sql_string = make_art_filter_sql_string(condition)
+        ''' 총판매가 
+        
         '''
 
-        art_filter_sql = self.make_art_filter_sql(condition)
-        auction_filter_sql = self.make_auction_filter_sql(condition)
-        auctionart_filter_sql = self.make_auctionart_filter_sql(condition)
-        auctionsite_filter_sql = self.make_auctionsite_filter_sql(condition)
 
-        sql = f"""
-        select 
-            top {condition['page_size']} * 
-        from
-            artists,
-            (
-                select 
-                    sum(money) stat_value, artist_id 
-                from 
-                    (select * from art_infos {art_filter_sql} ) art,  
-                    (select * from auctions {auction_filter_sql} ) auction,
-                    (select * from auction_arts {auctionart_filter_sql} ) auction_art,
-                    (select * from auction_site{auctionsite_filter_sql} ) auction_site
-                where 
-                    art.art_info_id = auction_art.art_info_id
-                    and auction.auction_id = auction_art.auction_id
-                    and auction_site.site_id = auctions.site_id
-                group by 
-                    art.artist_id
-            ) stat
-        where 
-            artists.artist_id = stat.artist_id
-            and artist_name_kor is not NULL
-        order by 
-            stat_value desc
-        """ 
+        
+        ''' 출품수 
+        select top 20 * from
+        artists,
+        (
+            select count(1) cnt, artist_id from 
+            (select * from art_infos) art,  --art_filter_sql_string
+            (select * from auction_arts) auction
+            where art.art_info_id = auction.art_info_id
+            group by art.artist_id
+        ) stat
+        where artists.artist_id = stat.artist_id
+        and artist_name_kor is not NULL
+        order by cnt desc
+        '''
 
+        return res
+    
+    def get(self):
+        page = request.args.get('page', default = 1, type = int)
+        condition = self.get_condition_from_parameter(request)
+        data = self.get_artist_rank(condition)
 
-
+        res = {
+            data:data
+        }
         return res

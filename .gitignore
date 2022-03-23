@@ -1,6 +1,8 @@
 .git
 .vscode
-__pycache__
-.deployment.py
-constant.py
+
+/.deployment
 deploy.bat
+/constant.py
+/__pycache__
+/deploy.bat

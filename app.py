@@ -25,7 +25,7 @@ from resources.artists import Artists
 from resources.release import Releases
 from resources.sellingarts import SellingArts
 from resources.artistsinfo import ArtistInfo
-from resources.artistrank import ArtistRanking, RecentArtistRanking, RecentPopularArtistRanking
+from resources.artistrank import ArtistRanking, RecentArtistRanking, RecentPopularArtistRanking, ArtistRankv2
 from resources.searchrank import SearchRanking
 from resources.mycollection import MyCollection
 from resources.login import Login
@@ -100,6 +100,7 @@ api.add_resource(ArtistDetailMoney,'/artistdetailmoney')
 api.add_resource(FollowingArtistsAuctionPlan,'/followingartistsauctionplan')
 api.add_resource(RecentArtistRanking,'/recentartistranking')
 api.add_resource(RecentPopularArtistRanking,'/recentpopularartistranking')
+api.add_resource(ArtistRankv2,'/rank')
 
 if __name__ == '__main__':
     app.run(debug=True)

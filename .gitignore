@@ -3,6 +3,10 @@
 
 /.deployment
 deploy.bat
-/constant.py
+deploy.zip
+constant.py
+__pycache__
 /__pycache__
-/deploy.bat
+db.sqlite
+resources/__pycache__
+

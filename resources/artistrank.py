@@ -1,21 +1,24 @@
 
-from curses.ascii import NUL
+import json
+import requests
+import pandas as pd
+import werkzeug
+import datetime
+
+
 from flask import Flask, send_file, jsonify, request
 from flask_restful import Resource, Api
 from flask_cors import CORS
 from flask_restful.reqparse import RequestParser
-import json
-from constant import *
-import pandas as pd
-from utils import *
-import werkzeug
 from bs4 import BeautifulSoup
-import requests
 from urllib.parse import urljoin
 from datetime import datetime
-import datetime
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
+
+from constant import *
+from utils import *
+
+
 
 def index(df):
     #평균 낙찰가
@@ -191,21 +194,22 @@ class ArtistRankv2(Resource):
     
     def get(self):
         page = request.args.get('page', default = 1, type = int)
-        print(request)
+        #print(request)
         condition = self.get_condition_from_parameter()
-        data = self.get_artist_rank(condition)
+        data, sql = self.get_artist_rank(condition)
         
         # Object of type Timestamp is not JSON serializable 에러 때문에 컬럼삭제
-        del data['create_time']
-
+        #del data['create_time']
+        #print(data)
         res = {
-            'data':data.to_dict()
+            'data':data.to_dict(orient='records'),
+            'sql':sql
         }
         return res
 
     def get_condition_from_parameter(self):
         return {
-            'orderby':'sell_count',
+            'orderby':request.args.get('orderby', default=None),
                     #search(검색수) 또는 
                     #sell_count(판매량) 또는 
                     #sell_revenue(판매금액) 또는
@@ -217,92 +221,103 @@ class ArtistRankv2(Resource):
                     #release_count (출품수) 
                     #미 입력시 에러
             #'columns': 'name, rank, search_count', #name, rank, search_count, sell_count, sell_revenue 등 가져올 수 있는 컬럼 가변적으로, 미입력시 에러
-            'page_size' : 20, #(한번에 가져올 row수) : 1~100 정수, 미입력시 20이 기본값
-            'page_num' :1, #(몇페이지?) : 1~n 정수, 미입력시 1이 기본값
+            'page_size' : request.args.get('page_size', default = 20), #(한번에 가져올 row수) : 1~100 정수, 미입력시 20이 기본값
+            'page_num' :request.args.get('page_num', 1), #(몇페이지?) : 1~n 정수, 미입력시 1이 기본값
             'is_follow' :'n',#(following한 여부) : y 또는 n, 미입력시 n이 기본값
             
-            'filter_auction_site':NUL,#request.args.get('filter_auction_site', NUL),  # seoul, K
-            'filter_auction_place':NUL,
-            'filter_auction_date_start':NUL,
-            'filter_auction_date_end':NUL,
-            'filter_auction_sale_price_start':NUL,
-            'filter_auction_sale_price_end':NUL,
+            'filter_auction_site':request.args.get('filter_auction_site', default=None),
+            'filter_auction_place':request.args.get('filter_auction_place', default=None),
+            'filter_auction_date_start':request.args.get('filter_auction_date_start', default=None),
+            'filter_auction_date_end':request.args.get('filter_auction_date_end', default=None),
+            'filter_auction_sale_price_start':request.args.get('filter_auction_sale_price_start', default=None),
+            'filter_auction_sale_price_end':request.args.get('filter_auction_sale_price_end', default=None),
 
-            'filter_artist_born_start':NUL,
-            'filter_artist_born_end':NUL,
+            'filter_artist_born_start':request.args.get('filter_artist_born_start', None),
+            'filter_artist_born_end':request.args.get('filter_artist_born_end',None),
 
-            'filter_art_artwork_type':NUL,
-            'filter_art_made_year_start':NUL,
-            'filter_art_made_year_end':NUL,
-            'filter_art_size_metric':NUL, #cm 로만 받도록 함. 
-            'filter_art_height_start':NUL,
-            'filter_art_height_end':NUL,
-            'filter_art_width_start':NUL,
-            'filter_art_width_end':NUL,
+            'filter_art_artwork_type':request.args.get('filter_art_artwork_type',None),
+            'filter_art_made_year_start':request.args.get('filter_art_made_year_start', None),
+            'filter_art_made_year_end':request.args.get('filter_art_made_year_end', None),
+            'filter_art_size_metric':request.args.get('filter_art_size_metric', None),
+            'filter_art_height_start':request.args.get('filter_art_height_start', None),
+            'filter_art_height_end':request.args.get('filter_art_height_end', None),
+            'filter_art_width_start':request.args.get('filter_art_width_start', None),
+            'filter_art_width_end':request.args.get('filter_art_width_end', None),
+            'dbtype':request.args.get('dbtype', 'sqlite'),
         }
     
     def make_auction_filter_sql(self, condition):
         result = ' WHERE 1 = 1 '
+
+        if condition['filter_auction_place'] == 'all':
+            condition['filter_auction_place'] = None
         if condition['filter_auction_place'] is not None:
-            result += f' and auction_place = %(filter_auction_place)s '
+            result += f' and auction_place = :filter_auction_place '
 
         if condition['filter_auction_date_start'] is not None:
-            result += f' and auction_date >= %(filter_auction_date_start)s'
+            result += f' and auction_date >= :filter_auction_date_start'
 
         if condition['filter_auction_date_end'] is not None:
-            result += f' and auction_date <= %(filter_auction_date_end)s'
+            result += f' and auction_date <= :filter_auction_date_end'
         return result
 
 
 
     def make_artist_filter_sql(self, condition):
-        result = 'WEHRE 1 = 1'
+        result = ' WHERE 1 = 1'
+        result += " and artist_name_kor is not NULL "
+        result += " and artist_name_kor != '작자미상' "
         if condition['filter_artist_born_start'] is not None:
-            result += f' and birth >= %(filter_artist_born_start)s'
+            result += f' and born >= :filter_artist_born_start'
 
         if condition['filter_artist_born_end'] is not None:
-            result += f' and birth <= %(filter_artist_born_end)s'
+            result += f' and born <= :filter_artist_born_end'
         return result
 
 
 
     def make_auctionsite_filter_sql(self, condition):
         result = ' WHERE 1 = 1 '
+
+        if condition['filter_auction_site'] == 'all':
+            condition['filter_auction_site'] = None
         if condition['filter_auction_site'] is not None:
-            result += f' and auction_site = %(filter_auction_site)s '
+            result += f' and auction_site = :filter_auction_site '
         return result
-
-
 
     def make_auctionart_filter_sql(self, condition):
         result = ' WHERE 1 = 1 '
         if condition['filter_auction_sale_price_start'] is not None:
-            result += f' and money >= %(filter_auction_sale_price_start)s '
+            result += f' and money >= :filter_auction_sale_price_start '
         if condition['filter_auction_sale_price_end'] is not None:
-            result += f' and money <= %(filter_auction_sale_price_end)s '
+            result += f' and money <= :filter_auction_sale_price_end '
         return result
 
 
 
     def make_art_filter_sql(self, condition):
         result = ' WHERE 1 = 1 '
+
         if condition['filter_art_artwork_type'] is not None:
-            result += f' and artwork_type like %(filter_artwork_type)s '
+            if 'all' not in condition['filter_art_artwork_type']:
+                artwork = condition['filter_art_artwork_type'].split(',')
+                artwork = map(lambda i: "'"+i+"'", artwork)
+                result += f' and artwork_type in ('+','.join(artwork)+')'
         if condition['filter_art_made_year_start'] is not None:
-            result += f' and make_year >= %(filter_art_made_year_start)s '
+            result += f' and make_year >= :filter_art_made_year_start '
         if condition['filter_art_made_year_end'] is not None:
-            result += f' and make_year <= %(filter_art_made_year_end)s '
+            result += f' and make_year <= :filter_art_made_year_end '
 
 
         if condition['filter_art_height_start'] is not None:
-            result += f' and size_length <= %(filter_art_height_start)s '
+            result += f' and size_length <= :filter_art_height_start '
         if condition['filter_art_height_end'] is not None:
-            result += f' and size_length <= %(filter_art_height_end)s '
+            result += f' and size_length <= :filter_art_height_end '
 
         if condition['filter_art_width_start'] is not None:
-            result += f' and size_width <= %(filter_art_width_start)s '
+            result += f' and size_width <= :filter_art_width_start '
         if condition['filter_art_width_end'] is not None:
-            result += f' and size_width <= %(filter_art_width_end)s '
+            result += f' and size_width <= :filter_art_width_end '
 
         return result
 
@@ -323,6 +338,7 @@ class ArtistRankv2(Resource):
 
     def make_stat_sql(self, condition):
         result = ''
+
         if condition['orderby'] == 'bid_value_avg':   #평균낙찰가
             result = 'avg(money) stat_value'
         elif condition['orderby'] == 'canvas_avg_money': #호당낙찰가
@@ -361,50 +377,102 @@ class ArtistRankv2(Resource):
         //todo total index 
         total index = rank( SUM(상승률랭크, 평균가랭크, 호당랭크, 최고가랭크,총판매가랭크,출품수랭크)  )
         '''
-
-        art_filter_sql = ''#self.make_art_filter_sql(condition)
-        artist_filter_sql = ''#self.make_artist_filter_sql(condition)
-        if artist_filter_sql != '' and artist_filter_sql != NUL:
-            artist_filter_sql = " and "+ artist_filter_sql
-        auction_filter_sql = ''#self.make_auction_filter_sql(condition)
-        auctionart_filter_sql = ''#self.make_auctionart_filter_sql(condition)
-        auctionsite_filter_sql = ''#self.make_auctionsite_filter_sql(condition)
+        print(condition)
+        art_filter_sql = self.make_art_filter_sql(condition)
+        artist_filter_sql = self.make_artist_filter_sql(condition)
+        auction_filter_sql = self.make_auction_filter_sql(condition)
+        auctionart_filter_sql = self.make_auctionart_filter_sql(condition)
+        auctionsite_filter_sql = self.make_auctionsite_filter_sql(condition)
 
         stat = self.make_stat_sql(condition)
 
 
-            
-        #top {condition['page_size']}
-        sql = f"""
-        select 
-             * 
-        from
-            artists with(nolock),
-            (
-                select 
-                    {stat}, artist_id 
-                from 
-                    (select * from art_infos with(nolock) {art_filter_sql} ) art,  
-                    (select * from auctions with(nolock) {auction_filter_sql} ) auction,
-                    (select * from auction_arts with(nolock) {auctionart_filter_sql} ) auction_art,
-                    (select * from sites with(nolock) {auctionsite_filter_sql} ) auction_site
-                where 
-                    art.art_info_id = auction_art.art_info_id
-                    and auction.auction_id = auction_art.auction_id
-                    and auction_site.site_id = auction.site_id
-                group by 
-                    art.artist_id
-            ) stat
-        where 
-            artists.artist_id = stat.artist_id
-            and artist_name_kor is not NULL
-            {artist_filter_sql}
-        ORDER BY 
-            [stat_value] DESC
-        OFFSET ({condition['page_num']} - 1) * {condition['page_size']} ROWS FETCH NEXT {condition['page_size']} ROWS ONLY
+        sql = ''
 
-        """ 
+        #FIXME : refactoring 
+        if condition['dbtype'] == 'mssql':
+            sql = f"""
+            select 
+                artists.artist_id artist_id, 
+                artists.artist_name_kor artist_name_kor, 
+                artists.artist_name_eng artist_name_eng, 
+                stat.stat_value stat_value
+            from
+                (
+                    select 
+                        * 
+                    from 
+                        artists with(nolock)
+                    {artist_filter_sql}
+                ) artists,
+                (
+                    select 
+                        {stat}, artist_id 
+                    from 
+                        (select * from art_infos with(nolock) {art_filter_sql} ) art,  
+                        (select * from auctions with(nolock) {auction_filter_sql} ) auction,
+                        (select * from auction_arts with(nolock) {auctionart_filter_sql} ) auction_art,
+                        (select * from sites with(nolock) {auctionsite_filter_sql} ) auction_site
+                    where 
+                        art.art_info_id = auction_art.art_info_id
+                        and auction.auction_id = auction_art.auction_id
+                        and auction_site.site_id = auction.site_id
+                    group by 
+                        art.artist_id
+                ) stat
+            where 
+                artists.artist_id = stat.artist_id 
+            ORDER BY 
+                [stat_value] DESC
+            OFFSET ({condition['page_num']} - 1) * {condition['page_size']} ROWS FETCH NEXT {condition['page_size']} ROWS ONLY
+
+            """ 
+        else :
+            sql = f"""
+                    select 
+                        artists.artist_id artist_id, 
+                        artists.artist_name_kor artist_name_kor, 
+                        artists.artist_name_eng artist_name_eng, 
+                        stat.stat_value stat_value
+                    from
+                        (
+                            select 
+                                * 
+                            from 
+                                artists
+                            {artist_filter_sql}
+                        ) artists,
+                        (
+                            select 
+                                {stat}, artist_id
+                            from 
+                                (select * from art_infos  {art_filter_sql} ) art,  
+                                (select * from auctions {auction_filter_sql}  ) auction,
+                                (select * from auction_arts  {auctionart_filter_sql}) auction_art,
+                                (select * from sites {auctionsite_filter_sql} ) auction_site
+                            where 
+                                art.art_info_id = auction_art.art_info_id
+                                and auction.auction_id = auction_art.auction_id
+                                and auction_site.site_id = auction.site_id
+                            group by 
+                                art.artist_id
+                        ) stat
+                    where 
+                        artists.artist_id = stat.artist_id 
+                    ORDER BY 
+                        stat_value desc
+                    LIMIT {condition['page_size']} OFFSET ({condition['page_num']} - 1) * ({condition['page_size']})
+            """ 
+
+        sqlcon = None
+        #FIXME : refactoring 
+        if condition['dbtype'] == 'mssql':
+            sqlcon = sqlserver
+        else:
+            sqlcon = sqlitecon
         
         print(sql, flush=True)
-        df = pd.read_sql(sql, sqlserver)
-        return df 
+        print(condition)
+
+        df = pd.read_sql(sql, sqlcon, params=condition)
+        return df,sql

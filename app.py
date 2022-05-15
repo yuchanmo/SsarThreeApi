@@ -5,30 +5,33 @@ from flask_restful.reqparse import RequestParser
 import json
 import pandas as pd
 import os
-from bs4 import BeautifulSoup
 import requests
-from urllib.parse import urljoin
 import numpy as np
 import json
 import werkzeug
 import os
 #import cv2
-from resources.artistdetailrank import ArtistDetailMoney, ArtistDetailRanking
-from resources.auctionart import AuctionArt
-from resources.followingartistauctionplan import FollowingArtistsAuctionPlan
+
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
 from utils import *
 from constant import *
 from resources.home import Home
-from resources.artistarts import ArtistArts
-from resources.followingartist import FollowingArtists
-from resources.artists import Artists
-from resources.release import Releases
-from resources.sellingarts import SellingArts
-from resources.artistsinfo import ArtistInfo
+# from resources.artistdetailrank import ArtistDetailMoney, ArtistDetailRanking
+# from resources.auctionart import AuctionArt
+# from resources.followingartistauctionplan import FollowingArtistsAuctionPlan
+# from resources.artistarts import ArtistArts
+# from resources.followingartist import FollowingArtists
+# from resources.artists import Artists
+# from resources.release import Releases
+# from resources.sellingarts import SellingArts
+# from resources.artistsinfo import ArtistInfo
+# from resources.searchrank import SearchRanking
+# from resources.mycollection import MyCollection
+# from resources.login import Login
 from resources.artistrank import ArtistRanking, RecentArtistRanking, RecentPopularArtistRanking, ArtistRankv2
-from resources.searchrank import SearchRanking
-from resources.mycollection import MyCollection
-from resources.login import Login
+
 
 #static server test
 static_url_base_path = '/static'
@@ -79,28 +82,29 @@ api = Api(app)
 #         favorite_df = df.sample(n=1000)
 #         favorite_rank = rankTable(favorite_df,8)
 #         return convertJson(favorite_rank)
-        
+# https://artlink.azurewebsites.net/rank?orderby=sell_count
 
 
 api.add_resource(Home, '/')
-api.add_resource(Login,'/login')
-api.add_resource(ArtistArts, '/artistarts')
-api.add_resource(Artists, '/artists')
-api.add_resource(FollowingArtists, '/followingartists')
-api.add_resource(SellingArts, '/selling')
-api.add_resource(Releases,'/releases')
-api.add_resource(SearchRanking,'/searchranking')
-#api.add_resource(FavoriteRank,'/favoriterank')
-api.add_resource(ArtistInfo,'/artistinfo')
-api.add_resource(MyCollection,'/mycollection')
-api.add_resource(AuctionArt,'/auctionart')
-api.add_resource(ArtistRanking,'/artistranking')
-api.add_resource(ArtistDetailRanking,'/artistdetailranking')
-api.add_resource(ArtistDetailMoney,'/artistdetailmoney')
-api.add_resource(FollowingArtistsAuctionPlan,'/followingartistsauctionplan')
-api.add_resource(RecentArtistRanking,'/recentartistranking')
-api.add_resource(RecentPopularArtistRanking,'/recentpopularartistranking')
 api.add_resource(ArtistRankv2,'/rank')
+# api.add_resource(Login,'/login')
+# api.add_resource(ArtistArts, '/artistarts')
+# api.add_resource(Artists, '/artists')
+# api.add_resource(FollowingArtists, '/followingartists')
+# api.add_resource(SellingArts, '/selling')
+# api.add_resource(Releases,'/releases')
+# api.add_resource(SearchRanking,'/searchranking')
+# #api.add_resource(FavoriteRank,'/favoriterank')
+# api.add_resource(ArtistInfo,'/artistinfo')
+# api.add_resource(MyCollection,'/mycollection')
+# api.add_resource(AuctionArt,'/auctionart')
+# api.add_resource(ArtistRanking,'/artistranking')
+# api.add_resource(ArtistDetailRanking,'/artistdetailranking')
+# api.add_resource(ArtistDetailMoney,'/artistdetailmoney')
+# api.add_resource(FollowingArtistsAuctionPlan,'/followingartistsauctionplan')
+# api.add_resource(RecentArtistRanking,'/recentartistranking')
+# api.add_resource(RecentPopularArtistRanking,'/recentpopularartistranking')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
